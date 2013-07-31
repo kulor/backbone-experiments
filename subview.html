@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Backbone Sub View Control</title>
+    </head>
+
+    <body>
+        <p>Here I'm just demonstrating how to attach views to another view and how they may interact</p>
+
+        <div id="container">
+            <div>
+                <button>Add Child View</button>
+            </div>
+        </div>
+
+        <div style="display:none" id="templates">
+            <div id="child-tpl">Child Template <span></span> <button>Remove Me</button></div>
+        </div>
+
+        <script src="./backbone.marionette/jquery.js"></script>
+        <script src="./backbone.marionette/underscore.js"></script>
+        <script src="./backbone.marionette/backbone.js"></script>
+        <script type="text/javascript">
+$(document).ready(function(){
+    'use strict';
+    var viewCounter = 0,
+        view,
+        View,
+        ChildView;
+
+
+    ChildView = Backbone.View.extend({
+        el: $('#child-tpl')[0].outerHTML,
+        events: {
+            'click button': 'removeMe',
+            'click': 'click'
+        },
+        initialize: function(options){
+            this.parent = options.parent;
+            this.childViewNum = options.childViewNum;
+        },
+        render: function(){
+            this.$el.find('span').html(this.childViewNum);
+        },
+        click: function(){
+            alert('I am view number:' + this.childViewNum);
+        },
+        removeMe: function(e){
+            e.preventDefault();
+            e.stopPropagation();
+            this.parent.removeChildView(this.childViewNum);
+            this.remove();
+        }
+    });
+
+    View = Backbone.View.extend({
+        el: $('#container'),
+        events: {
+            'click button': 'addChildView'
+        },
+        initialize: function(){
+            this.$el.prepend('Master View Container');
+            this.subviews = [];
+            this.subviews.push(new ChildView({childViewNum: ++viewCounter, parent: this}));
+            this.subviews.push(new ChildView({childViewNum: ++viewCounter, parent: this}));
+        },
+        render: function(){
+            var that = this;
+            _.each(this.subviews, function(subview){
+                subview.render();
+                that.$el.append(subview.el);
+            });
+        },
+        addChildView: function(){
+            this.subviews.push(new ChildView({childViewNum: ++viewCounter, parent: this}));
+            this.render();
+        },
+        removeChildView: function(childViewNum){
+            var that = this;
+            _.each(this.subviews, function(subview, index){
+                if(subview.childViewNum == childViewNum){
+                    that.subviews.slice(index);
+                }
+            });
+        }
+    });
+
+    view = new View();
+    view.render();
+});
+        </script>
+    </body>
+</html>
