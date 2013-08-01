@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Backbone Pub Sub Hub</title>
+    </head>
+
+    <body>
+        <h1>Backbone Pub Sub Hub</h1>
+
+        <div id="container"></div>
+
+        <script id="main-view" type="text/template">
+            <div>I have got <span class="subscriber-count">0</span> subscribers. <button>Click to change all other views</button></div>
+        </script>
+
+        <script id="sub-view" type="text/template">
+            <div>I'm a child view. Iv'e been updated <span class="click-count">0</span> times</div>
+        </script>
+
+        <script src="./backbone.marionette/jquery.js"></script>
+        <script src="./backbone.marionette/underscore.js"></script>
+        <script src="./backbone.marionette/backbone.js"></script>
+        <script type="text/javascript">
+        $(document).ready(function(){
+            'use strict';
+            var App,
+                PublishView,
+                SubscriberView,
+                publishView,
+                subscriberView1,
+                subscriberView2,
+                subscriberView3,
+                $container = $('#container');
+
+            // App is essentially our Hub for events using the vent property
+            App = {
+                clickCount: 0,
+                subscriberCount: 0
+            };
+            App.vent = _.extend({}, Backbone.Events);
+
+            // Acting as both Publisher and subscriber
+            PublishView = Backbone.View.extend({
+                el: $('#main-view').html(),
+                events: {
+                    'click': 'click'
+                },
+                initialize: function(){
+                    var that = this;
+                    App.vent.on('module_subscribed', function(){
+                        App.subscriberCount ++;
+                        that.$el.find('.subscriber-count').text(App.subscriberCount);
+                    });
+                },
+                click: function(){
+                    App.clickCount ++;
+                    App.vent.trigger('module_clicked', App.clickCount);
+                },
+            });
+
+            // Subscribers will all have their dom node updated with the same incremented value
+            SubscriberView = Backbone.View.extend({
+                el: $('#sub-view').html(),
+                initialize: function(options){
+                    var that = this;
+                    this.$el.css({'color':options.colour});
+                    // Iterate the amount of subscribers to tell the publisher
+                    App.vent.trigger('module_subscribed');
+                    App.vent.on('module_clicked', function(clickCount){
+                        that.$el.find('.click-count').text(clickCount);
+                    })
+                },
+            });
+
+            publishView = new PublishView();
+            $container.append(publishView.$el);
+
+            subscriberView1 = new SubscriberView({colour:'green'});
+            $container.append(subscriberView1.$el);
+
+            subscriberView2 = new SubscriberView({colour:'orange'});
+            $container.append(subscriberView2.$el);
+
+            subscriberView3 = new SubscriberView({colour:'red'});
+            $container.append(subscriberView3.$el);
+        });
+        </script>
+    </body>
+</html>
